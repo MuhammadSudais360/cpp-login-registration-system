@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Converter &amp; Compressor</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animated-bg { background-size: 300% 300%; animation: gradientShift 8s ease infinite; }
+    .tab-active { background: linear-gradient(135deg, #6366f1, #ec4899); color: #fff !important; border-radius: 9999px; }
+    .tab-btn { transition: all 0.3s; border-radius: 9999px; padding: 0.5rem 1rem; }
+    .tab-btn:hover:not(.tab-active) { background: rgba(255,255,255,0.1); }
+    .drop-zone { border: 2px dashed rgba(255,255,255,0.3); transition: all 0.3s; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    .drop-zone:hover { border-color: #f472b6; background: rgba(244,114,182,0.1); }
+    .drop-zone.dragover { border-color: #f472b6; background: rgba(244,114,182,0.15); }
+    .glass-card { background: rgba(255,255,255,0.08); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.12); }
+    .btn-gradient { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); background-size: 200% 200%; animation: gradientShift 4s ease infinite; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+    .btn-gradient:disabled { opacity: 0.5; transform: none; box-shadow: none; cursor: not-allowed; }
+    .result-box { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15)); border: 1px solid rgba(16,185,129,0.3); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    .glow-text { background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .dl-btn { display: inline-block; padding: 0.5rem 1.5rem; background: #10b981; color: #fff; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; }
+    .dl-btn:hover { background: #059669; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full animated-bg" style="background: linear-gradient(135deg, rgb(15, 12, 41), rgb(48, 43, 99), rgb(36, 36, 62));">
+  <div class="w-full max-w-3xl mx-auto p-4 md:p-8">
+   <header class="text-center mb-8" style="animation: fadeIn 0.6s ease">
+    <div class="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full glass-card"><i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i> <span data-template-id="badge-text" class="canva-text text-xs font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 12px;">⚡ 100% Browser-Based • No Upload Required</span>
+    </div>
+    <h1 data-template-id="page-title" class="canva-text text-3xl md:text-4xl font-bold mb-2 glow-text" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 34px;">File Converter &amp; Compressor</h1>
+    <p data-template-id="page-subtitle" class="canva-text text-lg" style="color: rgb(196, 181, 253); font-weight: 400; font-style: normal; font-size: 16px;">Convert images, compress videos, PDF ↔ Word — all in your browser!</p>
+   </header>
+   <nav class="flex flex-wrap justify-center gap-2 mb-8 glass-card rounded-2xl p-2"><button id="tab-convert" class="tab-btn tab-active text-sm font-medium" onclick="switchTab('convert')"><i data-lucide="image" class="inline w-4 h-4 mr-1"></i>Image Convert</button> <button id="tab-compress" class="tab-btn text-slate-300 text-sm font-medium" onclick="switchTab('compress')"><i data-lucide="minimize-2" class="inline w-4 h-4 mr-1"></i>Compress</button> <button id="tab-video" class="tab-btn text-slate-300 text-sm font-medium" onclick="switchTab('video')"><i data-lucide="video" class="inline w-4 h-4 mr-1"></i>Video</button> <button id="tab-pdf2word" class="tab-btn text-slate-300 text-sm font-medium" onclick="switchTab('pdf2word')"><i data-lucide="file-text" class="inline w-4 h-4 mr-1"></i>PDF → Word</button> <button id="tab-word2pdf" class="tab-btn text-slate-300 text-sm font-medium" onclick="switchTab('word2pdf')"><i data-lucide="file" class="inline w-4 h-4 mr-1"></i>Word → PDF</button>
+   </nav><!-- Image Convert -->
+   <section id="panel-convert" class="glass-card rounded-2xl p-6 fade-in">
+    <div class="drop-zone rounded-xl p-8 text-center cursor-pointer" id="convert-drop" onclick="document.getElementById('convert-input').click()"><i data-lucide="upload-cloud" class="mx-auto mb-3 w-10 h-10 text-pink-400"></i>
+     <p data-template-id="convert-upload-text" class="canva-text font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Drop an image here or click to upload</p>
+     <p class="text-xs text-slate-400 mt-1">PNG, JPG, WebP, GIF</p><input type="file" id="convert-input" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden">
+    </div>
+    <div id="convert-options" class="hidden mt-4 space-y-4">
+     <div class="flex items-center gap-3"><label data-template-id="format-label" class="canva-text font-medium text-sm" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Output Format:</label> <select id="convert-format" class="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white"> <option value="image/png" class="text-black">PNG</option> <option value="image/jpeg" class="text-black">JPEG</option> <option value="image/webp" class="text-black">WebP</option> </select>
+     </div>
+     <div class="rounded-lg overflow-hidden max-h-48 flex justify-center bg-black/20"><img id="convert-preview-img" class="max-h-48 object-contain">
+     </div><button data-template-id="convert-btn" id="convert-action-btn" class="canva-button w-full py-3 rounded-xl font-semibold btn-gradient text-white" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">✨ Convert Image</button>
+    </div>
+    <div id="convert-result" class="hidden mt-4 p-4 result-box rounded-xl text-center fade-in">
+     <p class="text-emerald-400 font-medium mb-3">✨ Conversion complete!</p><button id="convert-download-btn" class="dl-btn">⬇ Download File</button>
+    </div>
+   </section><!-- Image Compress -->
+   <section id="panel-compress" class="hidden glass-card rounded-2xl p-6 fade-in">
+    <div class="drop-zone rounded-xl p-8 text-center cursor-pointer" id="compress-drop" onclick="document.getElementById('compress-input').click()"><i data-lucide="upload-cloud" class="mx-auto mb-3 w-10 h-10 text-purple-400"></i>
+     <p data-template-id="compress-upload-text" class="canva-text font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Drop an image here or click to upload</p>
+     <p class="text-xs text-slate-400 mt-1">PNG, JPG, WebP</p><input type="file" id="compress-input" accept="image/png,image/jpeg,image/webp" class="hidden">
+    </div>
+    <div id="compress-options" class="hidden mt-4 space-y-4">
+     <div><label class="text-sm font-medium text-white/80">Quality: <span id="quality-val">70</span>%</label> <input type="range" id="quality-slider" min="10" max="100" value="70" class="w-full accent-purple-500" oninput="document.getElementById('quality-val').textContent=this.value">
+     </div>
+     <div><label class="text-sm font-medium text-white/80">Max Width (px)</label> <input type="number" id="max-width" value="1920" class="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white w-full">
+     </div>
+     <div class="rounded-lg overflow-hidden max-h-48 flex justify-center bg-black/20"><img id="compress-preview-img" class="max-h-48 object-contain">
+     </div><button data-template-id="compress-btn" id="compress-action-btn" class="canva-button w-full py-3 rounded-xl font-semibold btn-gradient text-white" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">🗜️ Compress Image</button>
+    </div>
+    <div id="compress-result" class="hidden mt-4 p-4 result-box rounded-xl text-center fade-in">
+     <p id="compress-info" class="text-emerald-400 font-medium mb-3"></p><button id="compress-download-btn" class="dl-btn">⬇ Download File</button>
+    </div>
+   </section><!-- Video Compress -->
+   <section id="panel-video" class="hidden glass-card rounded-2xl p-6 fade-in">
+    <div class="drop-zone rounded-xl p-8 text-center cursor-pointer" id="video-drop" onclick="document.getElementById('video-input').click()"><i data-lucide="upload-cloud" class="mx-auto mb-3 w-10 h-10 text-orange-400"></i>
+     <p data-template-id="video-upload-text" class="canva-text font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Drop a video here or click to upload</p>
+     <p class="text-xs text-slate-400 mt-1">MP4, WebM</p><input type="file" id="video-input" accept="video/mp4,video/webm" class="hidden">
+    </div>
+    <div id="video-options" class="hidden mt-4 space-y-4">
+     <div><label class="text-sm font-medium text-white/80">Scale: <span id="scale-val">50</span>%</label> <input type="range" id="scale-slider" min="10" max="100" value="50" class="w-full accent-orange-500" oninput="document.getElementById('scale-val').textContent=this.value">
+     </div>
+     <video id="video-preview" class="w-full rounded-lg max-h-48" controls=""></video><button data-template-id="video-btn" id="video-action-btn" class="canva-button w-full py-3 rounded-xl font-semibold btn-gradient text-white" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">🎬 Compress Video</button>
+     <p id="video-status" class="text-sm text-center text-slate-300 hidden"></p>
+    </div>
+    <div id="video-result" class="hidden mt-4 p-4 result-box rounded-xl text-center fade-in">
+     <p id="video-info" class="text-emerald-400 font-medium mb-3"></p><button id="video-download-btn" class="dl-btn">⬇ Download Video</button>
+    </div>
+   </section><!-- PDF to Word -->
+   <section id="panel-pdf2word" class="hidden glass-card rounded-2xl p-6 fade-in">
+    <div class="drop-zone rounded-xl p-8 text-center cursor-pointer" id="pdf-drop" onclick="document.getElementById('pdf-input').click()"><i data-lucide="upload-cloud" class="mx-auto mb-3 w-10 h-10 text-blue-400"></i>
+     <p data-template-id="pdf-upload-text" class="canva-text font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Drop a PDF file here or click to upload</p>
+     <p class="text-xs text-slate-400 mt-1">PDF files only</p><input type="file" id="pdf-input" accept=".pdf,application/pdf" class="hidden">
+    </div>
+    <div id="pdf-options" class="hidden mt-4 space-y-4">
+     <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+      <p data-template-id="pdf-note" class="canva-text text-xs" style="color: rgb(251, 191, 36); font-weight: 400; font-style: normal; font-size: 16px;">⚠️ Basic conversion: extracts text content only. Scanned/image PDFs may not convert well.</p>
+     </div>
+     <p id="pdf-filename" class="text-white/70 text-sm text-center"></p><button data-template-id="pdf2word-btn" id="pdf-action-btn" class="canva-button w-full py-3 rounded-xl font-semibold btn-gradient text-white" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">📄 Convert to Word</button>
+    </div>
+    <div id="pdf-result" class="hidden mt-4 p-4 result-box rounded-xl text-center fade-in">
+     <p class="text-emerald-400 font-medium mb-3">✨ Conversion complete!</p><button id="pdf-download-btn" class="dl-btn">⬇ Download .doc</button>
+    </div>
+   </section><!-- Word to PDF -->
+   <section id="panel-word2pdf" class="hidden glass-card rounded-2xl p-6 fade-in">
+    <div class="drop-zone rounded-xl p-8 text-center cursor-pointer" id="word-drop" onclick="document.getElementById('word-input').click()"><i data-lucide="upload-cloud" class="mx-auto mb-3 w-10 h-10 text-cyan-400"></i>
+     <p data-template-id="word-upload-text" class="canva-text font-medium" style="color: rgb(226, 232, 240); font-weight: 400; font-style: normal; font-size: 16px;">Drop a Word/text file here or click to upload</p>
+     <p class="text-xs text-slate-400 mt-1">.txt, .doc, .docx</p><input type="file" id="word-input" accept=".txt,.doc,.docx" class="hidden">
+    </div>
+    <div id="word-options" class="hidden mt-4 space-y-4">
+     <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+      <p data-template-id="word-note" class="canva-text text-xs" style="color: rgb(251, 191, 36); font-weight: 400; font-style: normal; font-size: 16px;">⚠️ Basic conversion: extracts text and opens print dialog for PDF save.</p>
+     </div>
+     <p id="word-filename" class="text-white/70 text-sm text-center"></p><button data-template-id="word2pdf-btn" id="word-action-btn" class="canva-button w-full py-3 rounded-xl font-semibold btn-gradient text-white" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">📑 Convert to PDF</button>
+    </div>
+    <div id="word-result" class="hidden mt-4 p-4 result-box rounded-xl text-center fade-in">
+     <p class="text-emerald-400 font-medium mb-3">✨ PDF ready!</p><button id="word-download-btn" class="dl-btn">⬇ Download PDF</button>
+    </div>
+   </section>
+   <footer class="mt-10 text-center">
+    <p data-template-id="footer-text" class="canva-text text-xs" style="color: rgb(148, 163, 184); font-weight: 400; font-style: normal; font-size: 16px;">🔒 All processing happens locally in your browser. No files are uploaded to any server.</p>
+   </footer>
+  </div>
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+    lucide.createIcons();
+
+    let convertFile, compressFile, videoFile, pdfFile, wordFile;
+    // Store blob URLs for downloads
+    let convertBlobUrl, compressBlobUrl, videoBlobUrl, pdfBlobUrl, wordContent = '';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('text-slate-300'); });
+      document.getElementById('tab-' + tab).classList.add('tab-active');
+      document.getElementById('tab-' + tab).classList.remove('text-slate-300');
+      ['convert','compress','video','pdf2word','word2pdf'].forEach(p => {
+        document.getElementById('panel-' + p).classList.toggle('hidden', p !== tab);
+      });
+    }
+
+    // Helper: force download a blob URL
+    function forceDownload(blobUrl, filename) {
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
+    }
+
+    // Drag and drop setup
+    function setupDrop(dropId, inputId) {
+      const zone = document.getElementById(dropId);
+      const input = document.getElementById(inputId);
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+    setupDrop('convert-drop', 'convert-input');
+    setupDrop('compress-drop', 'compress-input');
+    setupDrop('video-drop', 'video-input');
+    setupDrop('pdf-drop', 'pdf-input');
+    setupDrop('word-drop', 'word-input');
+
+    // ── Image Convert ──
+    document.getElementById('convert-input').addEventListener('change', function() {
+      convertFile = this.files[0]; if (!convertFile) return;
+      document.getElementById('convert-options').classList.remove('hidden');
+      document.getElementById('convert-result').classList.add('hidden');
+      document.getElementById('convert-preview-img').src = URL.createObjectURL(convertFile);
+    });
+
+    document.getElementById('convert-action-btn').addEventListener('click', function() {
+      if (!convertFile) return;
+      const btn = this; btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Converting...';
+      const format = document.getElementById('convert-format').value;
+      const ext = format.split('/')[1];
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        c.toBlob(blob => {
+          if (convertBlobUrl) URL.revokeObjectURL(convertBlobUrl);
+          convertBlobUrl = URL.createObjectURL(blob);
+          const fname = convertFile.name.replace(/\.[^.]+$/, '') + '.' + ext;
+          document.getElementById('convert-download-btn').onclick = () => forceDownload(convertBlobUrl, fname);
+          document.getElementById('convert-result').classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = '✨ Convert Image';
+        }, format, 0.92);
+      };
+      img.onerror = () => { btn.disabled = false; btn.textContent = '✨ Convert Image'; };
+      img.src = URL.createObjectURL(convertFile);
+    });
+
+    // ── Image Compress ──
+    document.getElementById('compress-input').addEventListener('change', function() {
+      compressFile = this.files[0]; if (!compressFile) return;
+      document.getElementById('compress-options').classList.remove('hidden');
+      document.getElementById('compress-result').classList.add('hidden');
+      document.getElementById('compress-preview-img').src = URL.createObjectURL(compressFile);
+    });
+
+    document.getElementById('compress-action-btn').addEventListener('click', function() {
+      if (!compressFile) return;
+      const btn = this; btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Compressing...';
+      const quality = document.getElementById('quality-slider').value / 100;
+      const maxW = parseInt(document.getElementById('max-width').value) || 1920;
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        c.toBlob(blob => {
+          if (compressBlobUrl) URL.revokeObjectURL(compressBlobUrl);
+          compressBlobUrl = URL.createObjectURL(blob);
+          const r = Math.round((1 - blob.size / compressFile.size) * 100);
+          const info = document.getElementById('compress-info');
+          info.textContent = r > 0 ? `✨ Compressed! ${r}% smaller (${(blob.size/1024).toFixed(1)}KB)` : `Output: ${(blob.size/1024).toFixed(1)}KB`;
+          const fname = 'compressed_' + compressFile.name.replace(/\.[^.]+$/, '') + '.jpg';
+          document.getElementById('compress-download-btn').onclick = () => forceDownload(compressBlobUrl, fname);
+          document.getElementById('compress-result').classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = '🗜️ Compress Image';
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => { btn.disabled = false; btn.textContent = '🗜️ Compress Image'; };
+      img.src = URL.createObjectURL(compressFile);
+    });
+
+    // ── Video Compress ──
+    document.getElementById('video-input').addEventListener('change', function() {
+      videoFile = this.files[0]; if (!videoFile) return;
+      document.getElementById('video-options').classList.remove('hidden');
+      document.getElementById('video-result').classList.add('hidden');
+      document.getElementById('video-preview').src = URL.createObjectURL(videoFile);
+    });
+
+    document.getElementById('video-action-btn').addEventListener('click', async function() {
+      if (!videoFile) return;
+      const btn = this; btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Processing...';
+      const status = document.getElementById('video-status');
+      status.classList.remove('hidden'); status.textContent = '⏳ Re-encoding video, please wait...';
+
+      try {
+        const scale = document.getElementById('scale-slider').value / 100;
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(videoFile); video.muted = true;
+        await new Promise((r, j) => { video.onloadedmetadata = r; video.onerror = j; });
+
+        const w = Math.round(video.videoWidth * scale);
+        const h = Math.round(video.videoHeight * scale);
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        const stream = canvas.captureStream(24);
+
+        // Try to get audio track
+        try {
+          const audioCtx = new AudioContext();
+          const source = audioCtx.createMediaElementSource(video);
+          const dest = audioCtx.createMediaStreamDestination();
+          source.connect(dest);
+          source.connect(audioCtx.destination);
+          dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+        } catch(e) { /* no audio track, that's ok */ }
+
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm', videoBitsPerSecond: 800000 });
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+        await new Promise((resolve) => {
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            if (videoBlobUrl) URL.revokeObjectURL(videoBlobUrl);
+            videoBlobUrl = URL.createObjectURL(blob);
+            const r = Math.round((1 - blob.size / videoFile.size) * 100);
+            document.getElementById('video-info').textContent = r > 0
+              ? `✨ Done! ${r}% smaller (${(blob.size/1024/1024).toFixed(1)}MB)`
+              : `Output: ${(blob.size/1024/1024).toFixed(1)}MB`;
+            const fname = 'compressed_' + videoFile.name.replace(/\.[^.]+$/, '') + '.webm';
+            document.getElementById('video-download-btn').onclick = () => forceDownload(videoBlobUrl, fname);
+            document.getElementById('video-result').classList.remove('hidden');
+            status.classList.add('hidden');
+            resolve();
+          };
+          recorder.start(100);
+          video.play();
+          function draw() {
+            if (video.ended || video.paused) { recorder.stop(); return; }
+            ctx.drawImage(video, 0, 0, w, h);
+            requestAnimationFrame(draw);
+          }
+          draw();
+          video.onended = () => { if (recorder.state === 'recording') recorder.stop(); };
+        });
+      } catch(e) {
+        status.textContent = '❌ Error processing video. Try a different file.';
+      }
+      btn.disabled = false;
+      btn.textContent = '🎬 Compress Video';
+    });
+
+    // ── PDF to Word ──
+    document.getElementById('pdf-input').addEventListener('change', function() {
+      pdfFile = this.files[0]; if (!pdfFile) return;
+      document.getElementById('pdf-options').classList.remove('hidden');
+      document.getElementById('pdf-result').classList.add('hidden');
+      document.getElementById('pdf-filename').textContent = '📎 ' + pdfFile.name;
+    });
+
+    document.getElementById('pdf-action-btn').addEventListener('click', function() {
+      if (!pdfFile) return;
+      const btn = this; btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Converting...';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const bytes = new Uint8Array(e.target.result);
+        let text = '';
+        try {
+          const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+          // Extract text from PDF stream objects
+          const textParts = [];
+          const tjMatches = raw.match(/\[([^\]]*)\]\s*TJ/g);
+          if (tjMatches) {
+            tjMatches.forEach(m => {
+              const strs = m.match(/\(([^)]*)\)/g);
+              if (strs) textParts.push(strs.map(s => s.slice(1,-1)).join(''));
+            });
+          }
+          const btMatches = raw.match(/\(([^)]+)\)\s*Tj/g);
+          if (btMatches) {
+            btMatches.forEach(m => {
+              const s = m.match(/\(([^)]+)\)/);
+              if (s) textParts.push(s[1]);
+            });
+          }
+          // Fallback: raw parenthesized strings
+          if (textParts.length === 0) {
+            const fallback = raw.match(/\(([^)]{2,})\)/g);
+            if (fallback) {
+              fallback.forEach(m => {
+                const t = m.slice(1,-1);
+                if (t.length > 3 && !/^[\\\/\d\s]+$/.test(t)) textParts.push(t);
+              });
+            }
+          }
+          text = textParts.join(' ').replace(/\\n/g, '\n').replace(/\\r/g, '').trim();
+          if (!text) text = 'Could not extract readable text from this PDF. The file may contain scanned images.';
+        } catch(err) {
+          text = 'Could not extract text from this PDF.';
+        }
+
+        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Converted</title><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;margin:40px;}</style></head><body>${text.split('\n').map(p => '<p>' + p + '</p>').join('')}</body></html>`;
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+        pdfBlobUrl = URL.createObjectURL(blob);
+        const fname = pdfFile.name.replace(/\.pdf$/i, '') + '.doc';
+        document.getElementById('pdf-download-btn').onclick = () => forceDownload(pdfBlobUrl, fname);
+        document.getElementById('pdf-result').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = '📄 Convert to Word';
+      };
+      reader.onerror = () => { btn.disabled = false; btn.textContent = '📄 Convert to Word'; };
+      reader.readAsArrayBuffer(pdfFile);
+    });
+
+    // ── Word to PDF ──
+    document.getElementById('word-input').addEventListener('change', function() {
+      wordFile = this.files[0]; if (!wordFile) return;
+      document.getElementById('word-options').classList.remove('hidden');
+      document.getElementById('word-result').classList.add('hidden');
+      document.getElementById('word-filename').textContent = '📎 ' + wordFile.name;
+    });
+
+    document.getElementById('word-action-btn').addEventListener('click', function() {
+      if (!wordFile) return;
+      const btn = this; btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Converting...';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let text = e.target.result;
+        // Strip HTML/XML tags
+        text = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!text || text.length < 3) text = 'Could not extract readable text from this file.';
+        wordContent = text;
+        document.getElementById('word-result').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = '📑 Convert to PDF';
+      };
+      reader.onerror = () => { btn.disabled = false; btn.textContent = '📑 Convert to PDF'; };
+      reader.readAsText(wordFile);
+    });
+
+    document.getElementById('word-download-btn').addEventListener('click', function() {
+      if (!wordContent) return;
+      const win = window.open('', '_blank');
+      if (!win) { showInlineMsg('word-result', '⚠️ Pop-up blocked! Please allow pop-ups and try again.'); return; }
+      win.document.write(`<!DOCTYPE html><html><head><title>PDF</title><style>body{font-family:Georgia,serif;padding:50px;max-width:700px;margin:auto;line-height:1.8;font-size:14px;color:#222;}@media print{body{padding:20px;}}</style></head><body>${wordContent.split('\n').map(p=>'<p>'+p+'</p>').join('')}<script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
+      win.document.close();
+    });
+
+    function showInlineMsg(containerId, msg) {
+      const el = document.getElementById(containerId);
+      const existing = el.querySelector('.inline-msg');
+      if (existing) existing.remove();
+      const p = document.createElement('p');
+      p.className = 'inline-msg text-yellow-400 text-sm mt-2';
+      p.textContent = msg;
+      el.appendChild(p);
+      setTimeout(() => p.remove(), 4000);
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fc2a9cc675597dc',t:'MTc3ODg1MzU2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body></html>
